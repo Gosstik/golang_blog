@@ -1,21 +1,9 @@
 package entities
 
-import (
-	"github.com/google/uuid"
-)
-
-type ImageUuid struct {
-	uuid.UUID
-}
-
-func NewImageUuid(uuid uuid.UUID) ImageUuid {
-	return ImageUuid{
-		UUID: uuid,
-	}
-}
-
 type Image struct {
-	ImageUuid   ImageUuid `db:"image_uuid"`
-	Url         string    `db:"url"`
-	ContentType string    `db:"content_type"`
+	UUID        string `gorm:"column:uuid;type:uuid;primaryKey;default:gen_random_uuid()"`
+	Url         string `gorm:"column:url;not null"`
+	ContentType string `gorm:"column:content_type;not null"`
 }
+
+func (Image) TableName() string { return "images" }
