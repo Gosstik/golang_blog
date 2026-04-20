@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package golang_blog;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/Gosstik/golang_blog/api/proto";
+
+////////////////////////////////////////////////////////////////////////////////
+//// Service
+
+service ImagesService {
+    // Uploads an image. Returns image UUID and URL.
+    rpc ImagesV1Upload(V1ImagesUploadRequest) returns (V1ImagesUploadResponse) {
+        option (google.api.http) = {
+            post: "/v1/images/upload"
+            body: "*"
+        };
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//// Requests/Responses
+
+message V1ImagesUploadRequest {
+    bytes image_data = 1;
+    string content_type = 2;
+}
+
+message V1ImagesUploadResponse {
+    string image_uuid = 1;
+    string image_url = 2;
+}
