@@ -13,12 +13,29 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	api_proto "github.com/Gosstik/golang_blog/api/proto"
+	"github.com/Gosstik/golang_blog/internal/clients"
+	"github.com/Gosstik/golang_blog/internal/config"
 	"github.com/Gosstik/golang_blog/internal/handlers/images_service"
 	"github.com/Gosstik/golang_blog/internal/handlers/posts_service"
+	pgRepo "github.com/Gosstik/golang_blog/internal/repositories/postgres"
+	redisRepo "github.com/Gosstik/golang_blog/internal/repositories/redis"
 )
 
 func main() {
-	postsHandler := posts_service.NewHandler()
+	cfg := config.Load()
+
+	// Init clients.
+	db := clients.NewPostgresDB(cfg.PostgresDSN)
+	rdb := clients.NewRedisClient(cfg.RedisAddr)
+
+	// Init repositories.
+	postRepo := pgRepo.NewPostRepository(db)
+	userRepo := pgRepo.NewUserRepository(db)
+	likesRepo := redisRepo.NewLikesRepository(rdb)
+	cacheRepo := redisRepo.NewCacheRepository(rdb)
+
+	// Init handlers.
+	postsHandler := posts_service.NewHandler(postRepo, userRepo, likesRepo, cacheRepo)
 	imagesHandler := images_service.NewHandler()
 
 	// Set up gRPC server.
@@ -27,26 +44,25 @@ func main() {
 	api_proto.RegisterImagesServiceServer(grpcServer, imagesHandler)
 	reflection.Register(grpcServer)
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", cfg.GRPCPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	go func() {
-		log.Println("gRPC server started on :50051")
+		log.Printf("gRPC server started on %s\n", cfg.GRPCPort)
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatalf("failed to serve gRPC: %v", err)
 		}
 	}()
 
 	// Set up gRPC-gateway.
-	conn, err := grpc.NewClient(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cfg.GRPCPort, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to create gRPC client: %v", err)
 	}
 
 	gwmux := runtime.NewServeMux(
-		// Forward X-User-Uuid HTTP header to gRPC metadata.
 		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
 			if strings.EqualFold(key, "X-User-Uuid") {
 				return "x-user-uuid", true
@@ -65,24 +81,21 @@ func main() {
 	// Set up HTTP mux with swagger-ui and gRPC-gateway.
 	mux := http.NewServeMux()
 
-	// Serve Swagger JSON.
 	mux.HandleFunc("/swagger-ui/api.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "api/json/api.swagger.json")
 	})
 
-	// Serve Swagger UI static files.
 	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui/", http.FileServer(http.Dir("contrib/swagger-ui"))))
 
-	// All other routes go to gRPC-gateway.
 	mux.Handle("/", gwmux)
 
 	gwServer := &http.Server{
-		Addr:    ":8090",
+		Addr:    cfg.HTTPPort,
 		Handler: mux,
 	}
 
-	log.Println("HTTP gateway + Swagger UI started on :8090")
-	log.Println("Swagger UI available at http://localhost:8090/swagger-ui/")
+	log.Printf("HTTP gateway + Swagger UI started on %s\n", cfg.HTTPPort)
+	log.Printf("Swagger UI available at http://localhost%s/swagger-ui/\n", cfg.HTTPPort)
 	if err := gwServer.ListenAndServe(); err != nil {
 		log.Fatalf("failed to serve HTTP: %v", err)
 	}

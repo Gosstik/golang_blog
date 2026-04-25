@@ -3,11 +3,12 @@ package posts_service
 import (
 	"context"
 
+	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api_proto "github.com/Gosstik/golang_blog/api/proto"
+	"github.com/Gosstik/golang_blog/internal/entities"
 )
 
 func (h *Handler) PostV1Create(ctx context.Context, req *api_proto.V1PostsCreateRequest) (*api_proto.V1PostsCreateResponse, error) {
@@ -16,22 +17,36 @@ func (h *Handler) PostV1Create(ctx context.Context, req *api_proto.V1PostsCreate
 		return nil, err
 	}
 
-	author, err := findUserByUuid(userUuid)
+	_, err = h.userRepo.GetByUUID(ctx, userUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
 	}
 
-	post := &api_proto.BlogPost{
-		Uuid:             "post-uuid-new",
-		Author:           author,
-		CreatedAt:        timestamppb.Now(),
-		LikesCount:       0,
-		ContentText:      req.GetContentText(),
-		ContentImageUrls: req.GetContentImageUrls(),
-		LikedByMe:        false,
+	imageUrls := req.GetContentImageUrls()
+	if imageUrls == nil {
+		imageUrls = []string{}
 	}
 
+	post := &entities.BlogPost{
+		AuthorUUID:       userUuid,
+		ContentText:      req.GetContentText(),
+		ContentImageUrls: pq.StringArray(imageUrls),
+	}
+
+	if err := h.postRepo.Create(ctx, post); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create post: %v", err)
+	}
+
+	// Reload with author.
+	created, err := h.postRepo.GetByUUID(ctx, post.UUID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to reload post: %v", err)
+	}
+
+	// Invalidate main page cache.
+	_ = h.cacheRepo.InvalidatePostsListCache(ctx)
+
 	return &api_proto.V1PostsCreateResponse{
-		Post: post,
+		Post: postToProto(created, 0, false),
 	}, nil
 }
