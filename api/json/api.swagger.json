@@ -1,0 +1,515 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "api/proto/images.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ImagesService"
+    },
+    {
+      "name": "PostsService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/images/upload": {
+      "post": {
+        "summary": "Uploads an image. Returns image UUID and URL.",
+        "operationId": "ImagesService_ImagesV1Upload",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1ImagesUploadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1ImagesUploadRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ImagesService"
+        ]
+      }
+    },
+    "/v1/posts": {
+      "get": {
+        "summary": "Returns a paginated list of posts ordered by creation time.",
+        "operationId": "PostsService_PostsV1List",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cursor.value",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      },
+      "post": {
+        "summary": "Creates a new blog post. Author is determined from X-User-Uuid header.",
+        "operationId": "PostsService_PostV1Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsCreateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsCreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      }
+    },
+    "/v1/posts/{postUuid}": {
+      "delete": {
+        "summary": "Deletes a blog post.",
+        "operationId": "PostsService_PostV1Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsDeleteResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUuid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      },
+      "patch": {
+        "summary": "Edits an existing blog post.",
+        "operationId": "PostsService_PostV1Edit",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsEditResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUuid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PostsServicePostV1EditBody"
+            }
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      }
+    },
+    "/v1/posts/{postUuid}/like": {
+      "delete": {
+        "summary": "Removes a like from a post. User is determined from X-User-Uuid header.",
+        "operationId": "PostsService_PostV1Unlike",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsUnlikeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUuid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      },
+      "post": {
+        "summary": "Likes a post. User is determined from X-User-Uuid header.",
+        "operationId": "PostsService_PostV1Like",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsLikeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUuid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      }
+    },
+    "/v1/posts/{postUuid}/likes": {
+      "get": {
+        "summary": "Returns a list of users who liked a specific post.",
+        "operationId": "PostsService_PostV1LikesListUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/golang_blogV1PostsLikesListUsersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUuid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cursor.value",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PostsService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "PostsServicePostV1EditBody": {
+      "type": "object",
+      "properties": {
+        "contentText": {
+          "type": "string",
+          "title": "[optional]"
+        },
+        "contentImageUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "[optional]"
+        }
+      }
+    },
+    "golang_blogBlogPost": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": "string"
+        },
+        "author": {
+          "$ref": "#/definitions/golang_blogUser"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "[optional]"
+        },
+        "likesCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "contentText": {
+          "type": "string",
+          "title": "[optional]"
+        },
+        "contentImageUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "likedByMe": {
+          "type": "boolean"
+        }
+      }
+    },
+    "golang_blogCursor": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        }
+      },
+      "description": "The value is a base64-encoded JSON string.\nEach endpoint defines its own cursor structure.\nEmpty cursor means end of pagination."
+    },
+    "golang_blogUser": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": "string"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "surname": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "title": "[optional]"
+        }
+      }
+    },
+    "golang_blogV1ImagesUploadRequest": {
+      "type": "object",
+      "properties": {
+        "imageData": {
+          "type": "string",
+          "format": "byte"
+        },
+        "contentType": {
+          "type": "string"
+        }
+      }
+    },
+    "golang_blogV1ImagesUploadResponse": {
+      "type": "object",
+      "properties": {
+        "imageUuid": {
+          "type": "string"
+        },
+        "imageUrl": {
+          "type": "string"
+        }
+      }
+    },
+    "golang_blogV1PostsCreateRequest": {
+      "type": "object",
+      "properties": {
+        "contentText": {
+          "type": "string",
+          "title": "[optional]"
+        },
+        "contentImageUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "golang_blogV1PostsCreateResponse": {
+      "type": "object",
+      "properties": {
+        "post": {
+          "$ref": "#/definitions/golang_blogBlogPost"
+        }
+      }
+    },
+    "golang_blogV1PostsDeleteResponse": {
+      "type": "object"
+    },
+    "golang_blogV1PostsEditResponse": {
+      "type": "object",
+      "properties": {
+        "post": {
+          "$ref": "#/definitions/golang_blogBlogPost"
+        }
+      }
+    },
+    "golang_blogV1PostsLikeResponse": {
+      "type": "object",
+      "properties": {
+        "likesCount": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "golang_blogV1PostsLikesListUsersResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/golang_blogUser"
+          }
+        },
+        "cursor": {
+          "$ref": "#/definitions/golang_blogCursor"
+        }
+      }
+    },
+    "golang_blogV1PostsListResponse": {
+      "type": "object",
+      "properties": {
+        "posts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/golang_blogBlogPost"
+          }
+        },
+        "cursor": {
+          "$ref": "#/definitions/golang_blogCursor"
+        }
+      }
+    },
+    "golang_blogV1PostsUnlikeResponse": {
+      "type": "object",
+      "properties": {
+        "likesCount": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package golang_blog;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Gosstik/golang_blog/api/proto";
+
+////////////////////////////////////////////////////////////////////////////////
+//// Common types
+
+message User {
+    string uuid = 1;
+    string nickname = 2;
+    string name = 3;
+    string surname = 4;
+    // [optional]
+    string avatar_url = 5;
+}
+
+message BlogPost {
+    string uuid = 1;
+    User author = 2;
+    google.protobuf.Timestamp created_at = 3;
+    // [optional]
+    google.protobuf.Timestamp updated_at = 4;
+    int64 likes_count = 5;
+    // [optional]
+    string content_text = 6;
+    repeated string content_image_urls = 7;
+    bool liked_by_me = 8;
+}
+
+// The value is a base64-encoded JSON string.
+// Each endpoint defines its own cursor structure.
+// Empty cursor means end of pagination.
+message Cursor {
+    string value = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//// Service
+
+service PostsService {
+    // Returns a paginated list of posts ordered by creation time.
+    rpc PostsV1List(V1PostsListRequest) returns (V1PostsListResponse) {
+        option (google.api.http) = {
+            get: "/v1/posts"
+        };
+    }
+
+    // Creates a new blog post. Author is determined from X-User-Uuid header.
+    rpc PostV1Create(V1PostsCreateRequest) returns (V1PostsCreateResponse) {
+        option (google.api.http) = {
+            post: "/v1/posts"
+            body: "*"
+        };
+    }
+
+    // Edits an existing blog post.
+    rpc PostV1Edit(V1PostsEditRequest) returns (V1PostsEditResponse) {
+        option (google.api.http) = {
+            patch: "/v1/posts/{post_uuid}"
+            body: "*"
+        };
+    }
+
+    // Deletes a blog post.
+    rpc PostV1Delete(V1PostsDeleteRequest) returns (V1PostsDeleteResponse) {
+        option (google.api.http) = {
+            delete: "/v1/posts/{post_uuid}"
+        };
+    }
+
+    // Likes a post. User is determined from X-User-Uuid header.
+    rpc PostV1Like(V1PostsLikeRequest) returns (V1PostsLikeResponse) {
+        option (google.api.http) = {
+            post: "/v1/posts/{post_uuid}/like"
+        };
+    }
+
+    // Removes a like from a post. User is determined from X-User-Uuid header.
+    rpc PostV1Unlike(V1PostsUnlikeRequest) returns (V1PostsUnlikeResponse) {
+        option (google.api.http) = {
+            delete: "/v1/posts/{post_uuid}/like"
+        };
+    }
+
+    // Returns a list of users who liked a specific post.
+    rpc PostV1LikesListUsers(V1PostsLikesListUsersRequest) returns (V1PostsLikesListUsersResponse) {
+        option (google.api.http) = {
+            get: "/v1/posts/{post_uuid}/likes"
+        };
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//// Requests/Responses
+
+// List
+
+message V1PostsListRequest {
+    int64 limit = 1;
+    Cursor cursor = 2;
+}
+
+message V1PostsListResponse {
+    repeated BlogPost posts = 1;
+    Cursor cursor = 2;
+}
+
+// Create
+
+message V1PostsCreateRequest {
+    // [optional]
+    string content_text = 1;
+    repeated string content_image_urls = 2;
+}
+
+message V1PostsCreateResponse {
+    BlogPost post = 1;
+}
+
+// Edit
+
+message V1PostsEditRequest {
+    string post_uuid = 1;
+    // [optional]
+    string content_text = 2;
+    // [optional]
+    repeated string content_image_urls = 3;
+}
+
+message V1PostsEditResponse {
+    BlogPost post = 1;
+}
+
+// Delete
+
+message V1PostsDeleteRequest {
+    string post_uuid = 1;
+}
+
+message V1PostsDeleteResponse {}
+
+// Like
+
+message V1PostsLikeRequest {
+    string post_uuid = 1;
+}
+
+message V1PostsLikeResponse {
+    int64 likes_count = 1;
+}
+
+// Unlike
+
+message V1PostsUnlikeRequest {
+    string post_uuid = 1;
+}
+
+message V1PostsUnlikeResponse {
+    int64 likes_count = 1;
+}
+
+// Likes list users
+
+message V1PostsLikesListUsersRequest {
+    string post_uuid = 1;
+    int64 limit = 2;
+    Cursor cursor = 3;
+}
+
+message V1PostsLikesListUsersResponse {
+    repeated User users = 1;
+    Cursor cursor = 2;
+}
