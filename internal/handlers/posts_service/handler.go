@@ -8,24 +8,36 @@ import (
 	"google.golang.org/grpc/status"
 
 	api_proto "github.com/Gosstik/golang_blog/api/proto"
+	"github.com/Gosstik/golang_blog/internal/repositories"
 )
 
 const (
-	// UserUuidHeader is the metadata key used to pass user UUID from HTTP header.
 	UserUuidHeader = "x-user-uuid"
 )
 
-// Handler implements api_proto.PostsServiceServer with hardcoded mock responses.
 type Handler struct {
 	api_proto.UnimplementedPostsServiceServer
+
+	postRepo  repositories.PostRepository
+	userRepo  repositories.UserRepository
+	likesRepo repositories.LikesRepository
+	cacheRepo repositories.CacheRepository
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(
+	postRepo repositories.PostRepository,
+	userRepo repositories.UserRepository,
+	likesRepo repositories.LikesRepository,
+	cacheRepo repositories.CacheRepository,
+) *Handler {
+	return &Handler{
+		postRepo:  postRepo,
+		userRepo:  userRepo,
+		likesRepo: likesRepo,
+		cacheRepo: cacheRepo,
+	}
 }
 
-// getUserUuid extracts user UUID from gRPC incoming metadata (forwarded from
-// X-User-Uuid HTTP header by grpc-gateway).
 func getUserUuid(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

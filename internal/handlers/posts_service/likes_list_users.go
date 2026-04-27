@@ -2,6 +2,7 @@ package posts_service
 
 import (
 	"context"
+	"strconv"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,14 +25,43 @@ func (h *Handler) PostV1LikesListUsers(ctx context.Context, req *api_proto.V1Pos
 		return nil, status.Error(codes.InvalidArgument, "limit must be greater than 0")
 	}
 
-	users := mockUsers
-	if limit > len(users) {
-		limit = len(users)
+	var redisCursor int64
+	if c := req.GetCursor(); c != nil && c.GetValue() != "" {
+		redisCursor, err = strconv.ParseInt(c.GetValue(), 10, 64)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid cursor: %v", err)
+		}
 	}
-	users = users[:limit]
+
+	userUUIDs, nextCursor, err := h.likesRepo.GetLikedUserUUIDs(ctx, req.GetPostUuid(), limit, redisCursor)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get liked users: %v", err)
+	}
+
+	if len(userUUIDs) == 0 {
+		return &api_proto.V1PostsLikesListUsersResponse{
+			Users:  nil,
+			Cursor: nil,
+		}, nil
+	}
+
+	users, err := h.userRepo.GetByUUIDs(ctx, userUUIDs)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get users: %v", err)
+	}
+
+	pbUsers := make([]*api_proto.User, len(users))
+	for i, u := range users {
+		pbUsers[i] = userToProto(&u)
+	}
+
+	var pbCursor *api_proto.Cursor
+	if nextCursor > 0 {
+		pbCursor = &api_proto.Cursor{Value: strconv.FormatInt(nextCursor, 10)}
+	}
 
 	return &api_proto.V1PostsLikesListUsersResponse{
-		Users:  users,
-		Cursor: nil,
+		Users:  pbUsers,
+		Cursor: pbCursor,
 	}, nil
 }
