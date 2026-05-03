@@ -1,0 +1,28 @@
+include:
+  - ../../docker-compose.yml
+
+services:
+  db_seed:
+    image: postgres:16-alpine
+    volumes:
+      - ../../postgresql/seeds:/seeds:ro
+    entrypoint: >
+      sh -c "until pg_isready -h postgres -U blog; do sleep 1; done &&
+             psql -h postgres -U blog -d blog -f /seeds/001_mock_data.sql"
+    environment:
+      PGPASSWORD: blog
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  loadtest:
+    build:
+      context: ../..
+      dockerfile: tests/loadtest/Dockerfile
+    environment:
+      BLOG_URL: "http://blog:8090"
+    depends_on:
+      blog:
+        condition: service_started
+      db_seed:
+        condition: service_completed_successfully

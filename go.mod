@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/golang/protobuf v1.5.4
+	github.com/google/go-cmp v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/lib/pq v1.12.3
 	github.com/prometheus/client_golang v1.23.2
