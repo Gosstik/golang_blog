@@ -1,6 +1,20 @@
-version: "3.9"
-
 services:
+  blog:
+    build: .
+    ports:
+      - "50051:50051"
+      - "8090:8090"
+    environment:
+      GRPC_PORT: ":50051"
+      HTTP_PORT: ":8090"
+      POSTGRES_DSN: "host=postgres port=5432 user=blog password=blog dbname=blog sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-alpine
     environment:
@@ -11,11 +25,22 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./postgresql/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blog"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pgdata:
